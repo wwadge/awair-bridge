@@ -1,0 +1,4 @@
+awair:
+  fetchRate: 10000   # time in ms
+  # either use the IP address here or else AWAIR-ELEM-[mac].local eg AWAIR-ELEM-24A034.local
+  address: AWAIR-ELEM-14A034.local
