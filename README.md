@@ -6,7 +6,9 @@ headless
 
 # Running the app
 
-Before you run the app, make sure you read the configuration section!
+!!!
+Before you run the app, make sure you read the configuration section
+!!!
 
 Then:
 
@@ -15,29 +17,52 @@ a) Simplest is via docker: docker run -it -e awair_token=ey... -e pw_initialRefr
 the -e options are overrides to any property in the main config (src/main/resources/application.yml). For example to set awair.fetchrate you can set
 the environmental property -e awair_fetchrate=900
 
+Any property can be overridden by an environment variable of the same name, with the characters changed to upper case, and the dots changed to underscores. This means that if we want to override any property, you can do it by setting an environment variable.
 
-b) Build/run: ./gradlew bootRun (or ./gradlew build then run java -jar build/libs/awair-bridge-0.0.1-SNAPSHOT.jar)
 
 
+b) Build/run it (if you prefer building the code from source):
+
+Build the code via `./gradlew build`
+
+So later you can run:
+
+`java -jar build/libs/awair-bridge-<version>.jar`
+
+Build the code and run it right away:
+
+`./gradlew bootRun` 
+
+(or ./gradlew build then run )
+
+There is no need to install gradle or java, it is self-hosting.
 
 
 # Configure the app
 
-All settings are in src/main/resources/application.yml - please look at the comments
-within that file.
+If you just blindly run the app right away, you're probably going to see it fail with an invalid token: 
+
+``400 Bad Request: "{"error":"invalid_grant","error_description":"Invalid refresh token"}"``
+
+That's because you MUST pass in some configuration options by either editing
+src/main/resources/application.yml or overriding them via env variables (see above)
+
 
 The key things to configure:
 1) awair.token 
 
-Open your Awair Home Application, click one of your sensors and press Awair+, Awair APIs Beta, Cloud API, Get API Token. Copy that key "ey...."
+This is the key that lets us talk to awair. Open your Awair Home Application, click one of your sensors and press Awair+, Awair APIs Beta, Cloud API, Get API Token. Copy that key that looks like "ey...."
 
 2) pw.initialRefreshToken 
 
 This is annoying because we want to run headless but PW have not yet enabled the right configuration to make it easy to just use a username/password combination. What we do here is to login first elsewhere and grab the refresh token, thereafter we keep refreshing that token without the need for a UI. 
 
 Therefore for one time only you need to:
+
 a) Run the alternate tool: https://github.com/Sheherezadhe/awair-uploader
+
 b) Before you login, open developer tools and go on network tab
+
 c) Login, then look for the request named "token". Click response and it should look like this:
 
 {
@@ -89,9 +114,13 @@ free for the data storage requirement.
 ```
 
 If you're not running under "google cloud", you will need a firebase credentials key:
-5. Under cog-wheel icon next to project overview -> project settings -> service accounts: Generate new secure key. Move the generated file somewhere accessible.
+
+Under cog-wheel icon next to project overview -> project settings -> service accounts: Generate new secure key. Move the generated file somewhere accessible.
 
 Now to configure the app:
+
+``
 persistence.type = firebase
 persistence.firestoreProjectId = what you set in step #1
 persistence.serviceAccountFile = location of the file of step 5
+``
