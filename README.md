@@ -94,9 +94,17 @@ google means the app will run as a cloud run function in Google Run
 firebase means the app will run on some server and the token is stored in firebase DB which is
 free for the data storage requirement.
 
+# Running on raspberry pi
+
+It's java so it should run anywhere, but simplest again is to use docker:
+
+``
+sudo docker run -d --restart=always -v ~/awair-bridge:/data -it -e persistence.type=local -e persistence.localFile=/data/token.json -e awair_token=YOUR-AWAIR-TOKEN  -e pw.initialRefreshToken=YOUR-FIRST-REFRESH-TOKEN wwadge/awair-bridge
+``
 
 # Running on google cloud
 
+WARNING: Cloudflare might block this request for you forcing you to use a VPN
 
 1. Create new firebase project (https://firebase.google.com/). Note down your project-id to set later on.
 2. Firestore DB -> create database. Keep production mode selected. Any location.
