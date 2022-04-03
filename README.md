@@ -2,7 +2,7 @@ Awair <--> PW bridge
 
 
 This app will read from Awair API and feed data onto Planetwatch (PW). It is designed to run 
-headless
+headless. 
 
 # Running the app
 
@@ -94,17 +94,18 @@ google means the app will run as a cloud run function in Google Run
 firebase means the app will run on some server and the token is stored in firebase DB which is
 free for the data storage requirement.
 
-# Running on raspberry pi
+# Running on raspberry pi/docker
 
-It's java so it should run anywhere, but simplest again is to use docker:
+It's java so it should run anywhere, but simplest is to use docker:
 
 ``
 sudo docker run -d --restart=always -v ~/awair-bridge:/data -it -e persistence.type=local -e persistence.localFile=/data/token.json -e awair_token=YOUR-AWAIR-TOKEN  -e pw.initialRefreshToken=YOUR-FIRST-REFRESH-TOKEN wwadge/awair-bridge
 ``
 
+For raspberry pi v3 please try:  wwadge/awair-bridge:armv7
+
 # Running on google cloud
 
-WARNING: Cloudflare might block this request for you forcing you to use a VPN
 
 1. Create new firebase project (https://firebase.google.com/). Note down your project-id to set later on.
 2. Firestore DB -> create database. Keep production mode selected. Any location.
@@ -132,3 +133,21 @@ persistence.type = firebase
 persistence.firestoreProjectId = what you set in step #1
 persistence.serviceAccountFile = location of the file of step 5
 ``
+
+# Troubleshooting
+
+!!
+Cloudflare might block request for you forcing you to use a VPN. PW configured
+their service to block potential harmful calls, this implies many cloud providers
+are banned by their IP address (they also do TLS fingerprinting and user-agent checks
+but these have been bypassed in the code)
+!!
+
+Try adding ``--debug`` as a command line argument to see more logs.
+
+You might see: 
+```
+ s.c.a.AnnotationConfigApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'dataBridgeImpl' defined in file [/app/classes/com/pw/awairbridge/service/impl/DataBridgeImpl.class]: Bean instantiation via constructor failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [com.pw.awairbridge.service.impl.DataBridgeImpl]: Constructor threw exception; nested exception is org.springframework.web.client.ResourceAccessException: I/O error on POST request for "https://login.planetwatch.io/auth/realms/Planetwatch/protocol/openid-connect/token": Unexpected end of file from server; nested exception is java.net.SocketException: Unexpected end of file from server
+```
+
+or code 1020 or http status code 403.
