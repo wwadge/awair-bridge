@@ -1,4 +1,46 @@
 awair:
-  fetchRate: 10000   # time in ms
-  # either use the IP address here or else AWAIR-ELEM-[mac].local eg AWAIR-ELEM-24A034.local
-  address: AWAIR-ELEM-14A034.local
+  fetchRateCron: 0 0/15 * * * *   # push data every 15 mins. Set to '-' to disable (i.e. externally scheduled eg cloud run)
+  address: https://developer-apis.awair.is
+  token: eyJ0eXA... copy this from AWAIR app. See README.md
+
+pw:
+  address: https://wearableapi.planetwatch.io/
+  initialRefreshToken: eyJhbGci..... copy this from browser. See README.md
+  authRefreshRateCron: 0 0/10 * * * * # every 10 mins go grab a new token. Set to '-' to disable (i.e. externally scheduled eg cloud run)
+
+persistence:
+  # memory = no persistence, can't survive a restart, run continously
+  # local = run somewhere locally, persist to disk
+  # google = run on google cloud platform
+  # firebase = run on some other server eg amazon and persist to firebase, see https://firebase.google.com/docs/firestore/quickstart#java_1
+  type: memory
+  serviceAccountFile: awair-bridge-firebase-adminsdk-1233-45d0babb6d.json # for type firebase only, ignored otherwise
+  fireStoreProjectId: awair-bridge  # for type = google or firebase only, ignored otherwise
+  localFile: /tmp/some-filename.json # for type local only, ignored otherwise
+
+
+
+### The following are probably ok for you to leave alone
+
+logging:
+  level:
+    org.springframework.web: ERROR
+    ROOT: INFO
+
+spring:
+  jackson:
+    default-property-inclusion: non_null
+    deserialization:
+      accept-single-value-as-array: true
+
+
+resilience4j.retry:
+  configs:
+    default:
+      maxAttempts: 5
+      waitDuration: 60000
+      retryExceptions:
+        - org.springframework.web.client.HttpServerErrorException
+        - java.util.concurrent.TimeoutException
+        - java.io.IOException
+        - feign.FeignException.InternalServerError

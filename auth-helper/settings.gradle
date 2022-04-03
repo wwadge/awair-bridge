@@ -5,6 +5,4 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-rootProject.name = 'awair-bridge'
-
-include('auth-helper')
+rootProject.name = 'awair-bridge-helper'
