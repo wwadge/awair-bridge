@@ -58,8 +58,9 @@ This is the key that lets us talk to awair. Open your Awair Home Application, cl
 This is annoying because we want to run headless but PW have not yet enabled the right configuration to make it easy to just use a username/password combination. What we do here is to login first elsewhere and grab the refresh token, thereafter we keep refreshing that token without the need for a UI. 
 
 Therefore for one time only you need to run the following script:
-
+```
 AUTHORIZATION_CODE_LOGIN_PASSWORD=your-pw-password ./pwlogin.sh -a "https://login.planetwatch.io/auth" -r "Planetwatch" -c "external-login" -l "http://localhost:33333/keycloak-redirect" -u yourplanetwatchusername@foo.com
+```
 
 You will need to install two dependencies for this script. On mac, this is as simple as:
 'brew install jq pup'
