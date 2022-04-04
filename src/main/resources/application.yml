@@ -37,7 +37,7 @@ spring:
 resilience4j.retry:
   configs:
     default:
-      maxAttempts: 5
+      maxAttempts: 10
       waitDuration: 60000
       retryExceptions:
         - org.springframework.web.client.HttpServerErrorException

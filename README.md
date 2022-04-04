@@ -57,27 +57,15 @@ This is the key that lets us talk to awair. Open your Awair Home Application, cl
 
 This is annoying because we want to run headless but PW have not yet enabled the right configuration to make it easy to just use a username/password combination. What we do here is to login first elsewhere and grab the refresh token, thereafter we keep refreshing that token without the need for a UI. 
 
-Therefore for one time only you need to:
+Therefore for one time only you need to run the following script:
 
-a) Run the alternate tool: https://github.com/Sheherezadhe/awair-uploader
+AUTHORIZATION_CODE_LOGIN_PASSWORD=your-pw-password ./pwlogin.sh -a "https://login.planetwatch.io/auth" -r "Planetwatch" -c "external-login" -l "http://localhost:33333/keycloak-redirect" -u yourplanetwatchusername@foo.com
 
-b) Before you login, open developer tools and go on network tab
+You will need to install two dependencies for this script. On mac, this is as simple as:
+'brew install jq pup'
 
-c) Login, then look for the request named "token". Click response and it should look like this:
-
-{
-"access_token": "eyJhbGciOiJS...",
-"expires_in": 1800,
-"refresh_expires_in": 0,
-"refresh_token": "eyJhbG...",
-"token_type": "Bearer",
-"id_token": "eyJhbG.."
-not-before-policy": 0,
-"session_state": "...",
-"scope": "openid profile offline_access email"
-}
-
-Copy the refresh_token into pw.initialRefreshToken.
+Copy the refresh_token into pw.initialRefreshToken. Alternately you can feed the output
+of the command above to an env variable: PW_INITIALREFRESHTOKEN=... prior to starting the app.
 
 Where's this refreshed token kept? You have some options controlled by 
 persistence options:

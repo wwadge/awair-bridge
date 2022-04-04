@@ -6,5 +6,3 @@ pluginManagement {
     }
 }
 rootProject.name = 'awair-bridge'
-
-include('auth-helper')

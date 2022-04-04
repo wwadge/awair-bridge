@@ -131,7 +131,7 @@ public class BeanConfig {
         try {
           result = Files.readString(Path.of(localFile));
         } catch (IOException e) {
-          log.warn("Unable to load {}, using initial refresh token from config", localFile);
+          log.warn("Unable to load {}, using initial refresh token from config. This is normal if it's the first time you're running the app.", localFile);
         }
 
         return result;
