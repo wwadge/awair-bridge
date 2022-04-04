@@ -6,6 +6,11 @@ import feign.Contract;
 import feign.Feign;
 import feign.codec.Decoder;
 import feign.codec.Encoder;
+import io.github.resilience4j.core.registry.EntryAddedEvent;
+import io.github.resilience4j.core.registry.EntryRemovedEvent;
+import io.github.resilience4j.core.registry.EntryReplacedEvent;
+import io.github.resilience4j.core.registry.RegistryEventConsumer;
+import io.github.resilience4j.retry.Retry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.openfeign.FeignClientsConfiguration;
@@ -43,6 +48,23 @@ public class BeanConfig {
         .target(PWClient.class, url);
   }
 
+  @Bean
+  public RegistryEventConsumer<Retry> myRetryRegistryEventConsumer() {
+    // log resilience retry events
+    return new RegistryEventConsumer<>() {
+      @Override
+      public void onEntryAddedEvent(EntryAddedEvent<Retry> entryAddedEvent) {
+        entryAddedEvent.getAddedEntry().getEventPublisher()
+            .onEvent(event -> log.info(event.toString()));
+      }
+
+      @Override
+      public void onEntryRemovedEvent(EntryRemovedEvent<Retry> entryRemoveEvent) {}
+
+      @Override
+      public void onEntryReplacedEvent(EntryReplacedEvent<Retry> entryReplacedEvent) {}
+    };
+  }
 
 
 }
