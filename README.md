@@ -12,7 +12,7 @@ Before you run the app, make sure you read the configuration section
 
 Then:
 
-a) Simplest is via docker: docker run -it -e awair_token=ey... -e pw.username=blah -e pw.password=bar docker.io/wwadge/awair-bridge
+a) Simplest is via docker: docker run -it -e awair_token=ey... -e pw_username=blah -e pw_password=bar docker.io/wwadge/awair-bridge
 
 the -e options are overrides to any property in the main config (src/main/resources/application.yml). For example to set awair.fetchrate you can set
 the environmental property -e awair_fetchrate=900
@@ -64,7 +64,7 @@ This is your PW password eg abcdef
 It's java so it should run anywhere, but simplest is to use docker:
 
 ``
- docker run -d --restart=always -e awair_token=YOUR-AWAIR-TOKEN -e pw.username=foo@gmail.com -e pw.password=bar wwadge/awair-bridge
+ docker run -d --restart=always -e awair_token=YOUR-AWAIR-TOKEN -e pw_username=foo@gmail.com -e pw_password=bar wwadge/awair-bridge
 ``
 
 For raspberry pi v3 please try:  wwadge/awair-bridge:armv7

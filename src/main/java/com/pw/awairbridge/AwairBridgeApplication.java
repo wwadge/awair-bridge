@@ -10,7 +10,7 @@ public class AwairBridgeApplication {
 
   public static void main(String[] args) {
     // This is non-default java cipher list to bypass cloudflare TLS fingerprinting
-    System.setProperty("https.cipherSuites", "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,TLS_RSA_WITH_AES_256_CBC_SHA256");
+    System.setProperty("https.cipherSuites", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256");
 
     SpringApplication.run(AwairBridgeApplication.class, args);
   }
