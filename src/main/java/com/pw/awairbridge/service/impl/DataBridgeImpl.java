@@ -91,7 +91,7 @@ public class DataBridgeImpl implements DataBridge {
       pwData.setDeviceId(device.getDeviceUUID());
       PWDataResponse pwResponse = pwClient.sendData(pwData);
       log.info("Sending data for device '{}' to PW: {}", device.getName(), pwResponse.isSuccess() ? "OK" : "FAILED");
-      Thread.sleep(1000L);  // let's be nice to pw and awair and not flood their servers
+      Thread.sleep(10000L);  // let's be nice to pw and awair and not flood their servers, we're not in a hurry here
     }
 
   }
