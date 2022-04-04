@@ -40,9 +40,7 @@ There is no need to install gradle or java, it is self-hosting.
 
 # Configure the app
 
-If you just blindly run the app right away, you're probably going to see it fail with an invalid token: 
-
-``400 Bad Request: "{"error":"invalid_grant","error_description":"Invalid refresh token"}"``
+If you just blindly run the app right away, you're probably going to see it fail.
 
 That's because you MUST pass in some configuration options by either editing
 src/main/resources/application.yml or overriding them via env variables (see above)
@@ -53,75 +51,24 @@ The key things to configure:
 
 This is the key that lets us talk to awair. Open your Awair Home Application, click one of your sensors and press Awair+, Awair APIs Beta, Cloud API, Get API Token. Copy that key that looks like "ey...."
 
-2) pw.initialRefreshToken 
+2) pw.username
 
-This is annoying because we want to run headless but PW have not yet enabled the right configuration to make it easy to just use a username/password combination. What we do here is to login first elsewhere and grab the refresh token, thereafter we keep refreshing that token without the need for a UI. 
+This is your PW username eg foo@gmail.com
 
-Therefore for one time only you need to run the following script:
-```
-AUTHORIZATION_CODE_LOGIN_PASSWORD=your-pw-password ./pwlogin.sh -a "https://login.planetwatch.io/auth" -r "Planetwatch" -c "external-login" -l "http://localhost:33333/keycloak-redirect" -u yourplanetwatchusername@foo.com
-```
+3) pw.password
 
-You will need to install two dependencies for this script. On mac, this is as simple as:
-'brew install jq pup'
-
-Copy the refresh_token into pw.initialRefreshToken. Alternately you can feed the output
-of the command above to an env variable: PW_INITIALREFRESHTOKEN=... prior to starting the app.
-
-Where's this refreshed token kept? You have some options controlled by 
-persistence options:
-
-persistence.type = memory  | local | google | firebase
-
-memory is simplest and means just keep in memory. If you restart the app, you might 
-still have a stale refresh token which might fail.
-
-local means the token is stored on a file on disk
-
-google means the app will run as a cloud run function in Google Run
-
-firebase means the app will run on some server and the token is stored in firebase DB which is
-free for the data storage requirement.
+This is your PW password eg abcdef
 
 # Running on raspberry pi/docker
 
 It's java so it should run anywhere, but simplest is to use docker:
 
 ``
-sudo docker run -d --restart=always -v ~/awair-bridge:/data -it -e persistence.type=local -e persistence.localFile=/data/token.json -e awair_token=YOUR-AWAIR-TOKEN  -e pw.initialRefreshToken=YOUR-FIRST-REFRESH-TOKEN wwadge/awair-bridge
+sudo docker run -d --restart=always -e awair_token=YOUR-AWAIR-TOKEN  -e pw.initialRefreshToken=YOUR-FIRST-REFRESH-TOKEN -e pw.username=foo@gmail.com -e pw.password=bar wwadge/awair-bridge
 ``
 
 For raspberry pi v3 please try:  wwadge/awair-bridge:armv7
 
-# Running on google cloud
-
-
-1. Create new firebase project (https://firebase.google.com/). Note down your project-id to set later on.
-2. Firestore DB -> create database. Keep production mode selected. Any location.
-3. Click rules and enable full access as follows:
-
-```
-   rules_version = '2';
-   service cloud.firestore {
-        match /databases/{database}/documents {
-              match /{document=**} {
-                allow read, write: if true;
-        }
-       }
-   }
-```
-
-If you're not running under "google cloud", you will need a firebase credentials key:
-
-Under cog-wheel icon next to project overview -> project settings -> service accounts: Generate new secure key. Move the generated file somewhere accessible.
-
-Now to configure the app:
-
-``
-persistence.type = firebase
-persistence.firestoreProjectId = what you set in step #1
-persistence.serviceAccountFile = location of the file of step 5
-``
 
 # Troubleshooting
 
@@ -133,10 +80,3 @@ but these have been bypassed in the code)
 !!
 
 Try adding ``--debug`` as a command line argument to see more logs.
-
-You might see: 
-```
- s.c.a.AnnotationConfigApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'dataBridgeImpl' defined in file [/app/classes/com/pw/awairbridge/service/impl/DataBridgeImpl.class]: Bean instantiation via constructor failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [com.pw.awairbridge.service.impl.DataBridgeImpl]: Constructor threw exception; nested exception is org.springframework.web.client.ResourceAccessException: I/O error on POST request for "https://login.planetwatch.io/auth/realms/Planetwatch/protocol/openid-connect/token": Unexpected end of file from server; nested exception is java.net.SocketException: Unexpected end of file from server
-```
-
-or code 1020 or http status code 403.

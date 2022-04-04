@@ -83,6 +83,7 @@ dependencies {
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
     implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j:2.1.0'
 
+    implementation 'org.jsoup:jsoup:1.14.3'
     implementation 'com.google.firebase:firebase-admin:8.1.0'
 
     compileOnly 'org.projectlombok:lombok'
