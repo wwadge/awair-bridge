@@ -29,14 +29,12 @@ public class DataBridgeImpl implements DataBridge {
 
   final AwairClient awairClient;
   final PWClient pwClient;
-  private final URI authUrl;
 
 
   private List<AwairDevice> matchingPWSensors;
   final PWAuthService pwAuthService;
 
   public DataBridgeImpl(AwairClient awairClient, PWClient pwClient,
-      @Value("${pw.authUrl:https://login.planetwatch.io/auth/realms/Planetwatch/protocol/openid-connect/token}") URI authUrl,
       PWAuthService pwAuthService) throws IOException {
     this.awairClient = awairClient;
     this.pwClient = pwClient;
@@ -44,8 +42,6 @@ public class DataBridgeImpl implements DataBridge {
 
     Auth pwAuth = pwAuthService.doLogin();
     BeanConfig.accessToken = pwAuth.getAccessToken();
-
-    this.authUrl = authUrl;
 
     filterPWEnabledSensors(); // figure out which sensors we care about
 
@@ -78,6 +74,7 @@ public class DataBridgeImpl implements DataBridge {
 
   @Override
   @Scheduled(fixedDelay = 15, timeUnit = TimeUnit.MINUTES)
+  @SuppressWarnings("unchecked")
   public void runService() throws InterruptedException {
 
     log.info("Starting data fetch...");
