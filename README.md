@@ -80,3 +80,18 @@ but these have been bypassed in the code)
 !!
 
 Try adding ``--debug`` as a command line argument to see more logs.
+
+# Upgrading
+
+- Pull the latest image: docker pull wwadge/awair-bridge
+- Kill and restart your docker images:
+
+Find your container id:
+
+``
+docker ps   
+``
+
+Kill it (use your container ID in the example below): 
+
+``docker kill 12412ca``
