@@ -87,11 +87,16 @@ public class DataBridgeImpl implements DataBridge {
       PWData pwData = new PWData();
 
       List<Map<String, Object>> data = (List<Map<String, Object>>) awairData.getOtherFields().get("data");
-      pwData.setOtherFields( data.get(0));
-      pwData.setDeviceId(device.getDeviceUUID());
-      PWDataResponse pwResponse = pwClient.sendData(pwData);
-      log.info("Sending data for device '{}' to PW: {}", device.getName(), pwResponse.isSuccess() ? "OK" : "FAILED");
-      Thread.sleep(10000L);  // let's be nice to pw and awair and not flood their servers, we're not in a hurry here
+      if (data.isEmpty()){
+        log.warn("Did not receive data as expected from Awair, skipping '{}'", device.getName());
+      } else {
+        pwData.setOtherFields(data.get(0));
+        pwData.setDeviceId(device.getDeviceUUID());
+        PWDataResponse pwResponse = pwClient.sendData(pwData);
+        log.info("Sending data for device '{}' to PW: {}", device.getName(),
+            pwResponse.isSuccess() ? "OK" : "FAILED");
+        Thread.sleep(10000L);  // let's be nice to pw and awair and not flood their servers, we're not in a hurry here
+      }
     }
 
   }

@@ -1,27 +1,23 @@
 package com.pw.awairbridge.util;
 
+import com.pw.awairbridge.client.PWAuthClient;
 import com.pw.awairbridge.client.dto.pw.Auth;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
-import org.jsoup.Connection;
 import org.jsoup.Connection.Method;
 import org.jsoup.Connection.Response;
 import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
 @Slf4j @Component
 public class PWAuthService {
@@ -34,33 +30,37 @@ public class PWAuthService {
   public static final String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) awair-uploader/0.0.1 Chrome/96.0.4664.110 Electron/16.0.7 Safari/537.36";
   private final String username;
   private final String password;
+  final PWAuthClient authClient;
 
-  public PWAuthService(@Value("${pw.username}") String username, @Value("${pw.password}") String password){
+  public PWAuthService(@Value("${pw.username}") String username,
+      @Value("${pw.password}") String password, PWAuthClient authClient){
     this.username = username;
     this.password = password;
+    this.authClient = authClient;
   }
   public Auth doLogin() throws IOException {
     log.info("Logging in PW");
-    Connection connection = Jsoup.connect("https://login.planetwatch.io/auth/realms/Planetwatch/protocol/openid-connect/auth");
 
-    Response response = connection.header("Content-Type",
-            "application/x-www-form-urlencoded")
-        .method(Method.GET)
-        .header("user-agent", USER_AGENT)
-        .data(CLIENT_ID, KC_CLIENT)
-        .data(REDIRECT_URI, DUMMY_REDIRECT)
-        .data("scope", "openid offline_access")
-        .data(RESPONSE_TYPE, "code")
-        .execute();
+    ResponseEntity<String> authResponse = authClient.openIDAuth(
+        Map.of(CLIENT_ID, KC_CLIENT,
+            REDIRECT_URI, DUMMY_REDIRECT,
+            "scope", "openid offline_access",
+            RESPONSE_TYPE, "code" ));
 
 
-    if (response.statusCode() != 200){
+    if (authResponse.getStatusCode() != HttpStatus.OK){
       throw new IOException("Could not start PW auth. Perhaps Cloudflare is blocking your request (especially if you're on cloud)");
     }
 
-    String loginAction = response.parse().select("#kc-form-login").attr("action").replace("&amp;", "&");
 
-    response = Jsoup.connect(loginAction)
+    String loginAction = Jsoup.parse(authResponse.getBody()).select("#kc-form-login").attr("action").replace("&amp;", "&");
+
+    Map<String, String> mapOfCookies = authResponse.getHeaders().get("Set-Cookie").stream().collect(
+        Collectors.toMap(s -> s.split("=")[0], s -> s.split("=")[1]
+        ));
+
+
+    Response response = Jsoup.connect(loginAction)
         .header("Content-Type", "application/x-www-form-urlencoded")
         .method(Method.POST)
         .followRedirects(false)
@@ -68,7 +68,7 @@ public class PWAuthService {
         .header("user-agent", USER_AGENT)
         .data("username", username)
         .data("password", password)
-        .cookies(response.cookies())
+        .cookies(mapOfCookies)
         .execute();
 
 
@@ -82,22 +82,19 @@ public class PWAuthService {
     Optional<NameValuePair> code = params.stream().filter(p-> p.getName().equals("code")).findAny();
 
 
-    MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-    body.add("client_id", "external-login");
-    body.add("grant_type", "authorization_code");
-    body.add("code", code.get().getValue());
-    body.add(REDIRECT_URI, DUMMY_REDIRECT);
+    ResponseEntity<Auth> res = authClient.fetchToken(    Map.of(CLIENT_ID, KC_CLIENT,
+        "grant_type", "authorization_code",
+        "code", code.get().getValue(),
+        REDIRECT_URI, DUMMY_REDIRECT
+        )
+    );
 
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-    headers.add("Accept", "application/json");
-    headers.add("User-agent", USER_AGENT);
 
-    RestTemplate restTemplate = new RestTemplate();
-    HttpEntity<?> entity = new HttpEntity<Object>(body, headers);
-    ResponseEntity<Auth> res = restTemplate.exchange("https://login.planetwatch.io/auth/realms/Planetwatch/protocol/openid-connect/token", HttpMethod.POST, entity, Auth.class);
-
-    log.info("Login to PW: OK");
+    if (res.getStatusCode() == HttpStatus.OK) {
+      log.info("Login to PW: OK");
+    } else {
+      log.error("Login to PW: FAILED");
+    }
     return res.getBody();
   }
 
