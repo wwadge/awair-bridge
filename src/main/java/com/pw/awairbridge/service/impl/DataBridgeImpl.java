@@ -1,5 +1,6 @@
 package com.pw.awairbridge.service.impl;
 
+import com.google.common.collect.Maps;
 import com.pw.awairbridge.client.AwairClient;
 import com.pw.awairbridge.client.PWClient;
 import com.pw.awairbridge.client.dto.awair.AwairDataPacket;
@@ -14,9 +15,10 @@ import com.pw.awairbridge.config.BeanConfig;
 import com.pw.awairbridge.service.DataBridge;
 import com.pw.awairbridge.util.PWAuthService;
 import java.io.IOException;
-import java.net.URI;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -30,14 +32,17 @@ public class DataBridgeImpl implements DataBridge {
   final AwairClient awairClient;
   final PWClient pwClient;
 
+  final List<String> awairTokens;
 
-  private List<AwairDevice> matchingPWSensors;
+  private Set<AwairDevice> matchingPWSensors;
   final PWAuthService pwAuthService;
 
   public DataBridgeImpl(AwairClient awairClient, PWClient pwClient,
-      PWAuthService pwAuthService) throws IOException {
+      @Value("${awair.token}")
+          List<String> awairTokens, PWAuthService pwAuthService) throws IOException {
     this.awairClient = awairClient;
     this.pwClient = pwClient;
+    this.awairTokens = awairTokens;
     this.pwAuthService = pwAuthService;
 
     Auth pwAuth = pwAuthService.doLogin();
@@ -59,17 +64,33 @@ public class DataBridgeImpl implements DataBridge {
     SensorDataResponse sensors = pwClient.getSensors();
     log.info("PW Sensors: " +sensors.toString());
 
+    Map<String, AwairDeviceResponse> allAwairDevices = Maps.newHashMap();
     // Fetch the sensors registered by awair
-    AwairDeviceResponse awairDevices = awairClient.getDeviceList();
-    log.info("Awair Sensors: " +awairDevices.toString());
+    for (String bearerToken: awairTokens){
+      AwairDeviceResponse devices = awairClient.getDeviceList("Bearer "+bearerToken);
+      devices.setBearerToken(bearerToken);
+
+      allAwairDevices.put(bearerToken, devices);
+      log.info("Awair Sensors: " +devices.toString());
+    }
+
+
 
     // Filter the list provided by Awair to only include the stuff that
     // PW knows about
-    this.matchingPWSensors = awairDevices.getDevices().stream()
-        .filter(p-> sensors.getData().stream()
-            .map(SensorData::getSensorId)
-            .anyMatch(name -> name.equals(p.getDeviceUUID())))
-        .collect(Collectors.toList());
+
+    this.matchingPWSensors = new HashSet<>();
+
+    allAwairDevices.entrySet().forEach(c -> {
+      List<AwairDevice> matchedDevices = c.getValue().getDevices().stream()
+          .filter(p -> sensors.getData().stream()
+              .map(SensorData::getSensorId)
+              .anyMatch(name -> name.equals(p.getDeviceUUID())))
+          .collect(Collectors.toList());
+
+      matchedDevices.forEach(p-> p.setBearerToken(c.getKey()));
+      this.matchingPWSensors.addAll(matchedDevices);
+    });
   }
 
   @Override
@@ -79,7 +100,7 @@ public class DataBridgeImpl implements DataBridge {
 
     log.info("Starting data fetch...");
     for (AwairDevice device: this.matchingPWSensors) {
-      AwairDataPacket awairData = awairClient.getAirData(device.getDeviceType(), device.getDeviceId());
+      AwairDataPacket awairData = awairClient.getAirData("Bearer "+device.getBearerToken(), device.getDeviceType(), device.getDeviceId());
       log.info(awairData.toString());
       PWData pwData = new PWData();
 

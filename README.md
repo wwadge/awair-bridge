@@ -51,6 +51,8 @@ The key things to configure:
 
 This is the key that lets us talk to awair. Open your Awair Home Application, click one of your sensors and press Awair+, Awair APIs Beta, Cloud API, Get API Token. Copy that key that looks like "ey...."
 
+If you have more than 1 key, separate them by a comma: -e awair_token=key1,key2,key3
+
 2) pw.username
 
 This is your PW username eg foo@gmail.com
@@ -95,3 +97,8 @@ docker ps
 Kill it (use your container ID in the example below): 
 
 ``docker kill 12412ca``
+
+
+
+
+

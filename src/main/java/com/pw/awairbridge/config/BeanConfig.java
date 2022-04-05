@@ -29,12 +29,11 @@ public class BeanConfig {
   public static volatile String accessToken;
 
   @Bean
-  AwairClient awairLocalClient(Encoder encoder, Decoder decoder, Contract contract, @Value("${awair.address}") String url, @Value("${awair.token}") String token) {
+  AwairClient awairLocalClient(Encoder encoder, Decoder decoder, Contract contract, @Value("${awair.address}") String url) {
     return Feign.builder()
         .encoder(encoder)
         .decoder(decoder)
         .contract(contract)
-        .requestInterceptor(template -> template.header("Authorization", "Bearer "+token))
         .target(AwairClient.class, url);
   }
 

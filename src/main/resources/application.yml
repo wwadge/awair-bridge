@@ -1,6 +1,6 @@
 awair:
   address: https://developer-apis.awair.is
-  token: eyJ0eXA... copy this from AWAIR app. See README.md
+  token: eyJ0eXA...,foo copy this from AWAIR app. See README.md
 
 pw:
   username: yourusername@gmail.com
@@ -31,3 +31,13 @@ resilience4j.retry:
         - java.util.concurrent.TimeoutException
         - java.io.IOException
         - feign.FeignException.InternalServerError
+        - feign.FeignException.Forbidden
+    pw-auth:
+      maxAttempts: 30       # Retry 30 times, 1 minute apart
+      waitDuration: 60000
+      retryExceptions:
+        - org.springframework.web.client.HttpServerErrorException
+        - java.util.concurrent.TimeoutException
+        - java.io.IOException
+        - feign.FeignException.InternalServerError
+        - feign.FeignException$Forbidden

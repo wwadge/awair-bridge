@@ -7,10 +7,12 @@ import lombok.Data;
 @Data
 public class AwairDeviceResponse {
   List<AwairDevice> devices;
+  private String bearerToken;
 
 
   @Data
   public static class AwairDevice {
+    private String bearerToken;
 
     private String name;
     private BigDecimal latitude; // 37.17
